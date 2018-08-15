@@ -39,8 +39,7 @@ public partial class github : System.Web.UI.Page
         {
             if (file.Type == "Dir")
             {
-                Response.Write("Creating: " + output + file.Path + "<br>");
-                Response.Flush();  // Dubug
+                Response.Write("Creating: " + output + file.Path + "<br>");        
                 Directory.CreateDirectory(output + file.Path);
                 CloneRepo(file);
             }
@@ -54,8 +53,7 @@ public partial class github : System.Web.UI.Page
             {
                 Response.Write(ex.ToString() + "<br>");
             }            
-            Response.Write("Writing: " + output + file.Path + "<br>");
-            Response.Flush(); // Dubug
+            Response.Write("Writing: " + output + file.Path + "<br>");     
         }
     }
 }
