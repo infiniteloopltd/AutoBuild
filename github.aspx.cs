@@ -2,7 +2,6 @@
 using System.IO;
 using GitSharp;
 using GitSharp.Commands;
-using System.IO.Compression;
 // Install-Package GitSharp
 
 public partial class github : System.Web.UI.Page
@@ -15,13 +14,35 @@ public partial class github : System.Web.UI.Page
             Source = "https://github.com/infiniteloopltd/AutoBuild.git",
             GitDirectory = tempFolder,
         });
-        Response.Write("Cloned<br>");        
-        var zipFile = tempFolder + ".zip";
+        Response.Write("Cloned<br>");
 
-        Response.Write("Zipping / unzipping <br>");
-        ZipFile.CreateFromDirectory(tempFolder, zipFile);
-        ZipFile.ExtractToDirectory(zipFile, @"E:\wwwroot\autobuild.webtropy.com\");
-        File.Delete(zipFile);
+        CopyFolder(new DirectoryInfo(tempFolder), @"e:\wwwroot\autobuild.webtropy.com\");
+        Response.Write("Copied");
+
+        // To Do, delete.
+    }
+
+    public bool CopyFolder( DirectoryInfo source, string destination)
+    {
+        try
+        {
+            foreach (string dirPath in Directory.GetDirectories(source.FullName))
+            {
+                var newDirPath = dirPath.Replace(source.FullName, destination);
+                Directory.CreateDirectory(newDirPath);
+                CopyFolder(new DirectoryInfo(dirPath),newDirPath);
+            }
+            //Copy all the files & Replaces any files with the same name
+            foreach (string filePath in Directory.GetFiles(source.FullName))
+            {
+                File.Copy(filePath, filePath.Replace(source.FullName, destination), true);
+            }
+            return true;
+        }
+        catch (IOException exp)
+        {
+            return false;
+        }
     }
 
     public string GetTemporaryDirectory()
