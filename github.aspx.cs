@@ -4,6 +4,7 @@ using System.Configuration;
 using System.IO;
 using ICSharpCode.SharpZipLib.GZip; // Install-Package SharpZipLib
 using ICSharpCode.SharpZipLib.Tar; // Install-Package SharpZipLib
+using System.Threading;
 
 public partial class github : System.Web.UI.Page
 {
@@ -15,6 +16,7 @@ public partial class github : System.Web.UI.Page
         var repository = ConfigurationManager.AppSettings["GITHUB_REPO"];
         var output = ConfigurationManager.AppSettings["DEPLOY_PATH"];
         client.Credentials = new Credentials(username, password);
+        Thread.Sleep(TimeSpan.FromSeconds(5)); // Wait 5 seconds, so the archive is correct
         var tDownload = client.Repository.Content.GetArchive(username, repository);
         var bArchive = tDownload.Result;
         var stream = new MemoryStream(bArchive);      
