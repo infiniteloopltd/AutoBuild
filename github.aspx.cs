@@ -1,54 +1,54 @@
-﻿using System;
+﻿using Octokit; // Install-Package Octokit 
+using System;
+using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
-using GitSharp;
-using GitSharp.Commands;
-// Install-Package GitSharp
+using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
 public partial class github : System.Web.UI.Page
 {
+    protected GitHubClient client = new GitHubClient(new ProductHeaderValue("Autobuild"));
     protected void Page_Load(object sender, EventArgs e)
     {
-        var tempFolder = GetTemporaryDirectory();
-        Response.Write("Cloning into :" + tempFolder + "<br>");
-        Git.Clone(new CloneCommand {
-            Source = "https://github.com/infiniteloopltd/AutoBuild.git",
-            GitDirectory = tempFolder,
-        });
-        Response.Write("Cloned<br>");
-
-        CopyFolder(new DirectoryInfo(tempFolder), @"e:\wwwroot\autobuild.webtropy.com\");
-        Response.Write("Copied");
-
-        // To Do, delete.
+        var username = ConfigurationManager.AppSettings["GITHUB_USERNAME"];
+        var password = ConfigurationManager.AppSettings["GITHUB_PASSWORD"];        
+        client.Credentials = new Credentials(username, password); 
+        CloneRepo();
     }
 
-    public bool CopyFolder( DirectoryInfo source, string destination)
+    private void CloneRepo(RepositoryContent repo = null)
     {
-        try
+        var output = ConfigurationManager.AppSettings["DEPLOY_PATH"];
+        var username = ConfigurationManager.AppSettings["GITHUB_USERNAME"];
+        var repository = ConfigurationManager.AppSettings["GITHUB_REPO"];
+        Task<IReadOnlyList<RepositoryContent>> task;
+        if (repo == null)
         {
-            foreach (string dirPath in Directory.GetDirectories(source.FullName))
-            {
-                var newDirPath = dirPath.Replace(source.FullName, destination);
-                Directory.CreateDirectory(newDirPath);
-                CopyFolder(new DirectoryInfo(dirPath),newDirPath);
-            }
-            //Copy all the files & Replaces any files with the same name
-            foreach (string filePath in Directory.GetFiles(source.FullName))
-            {
-                File.Copy(filePath, filePath.Replace(source.FullName, destination), true);
-            }
-            return true;
+            task = client.Repository.Content.GetAllContents(username, repository);
         }
-        catch (IOException exp)
+        else
         {
-            return false;
+            task = client.Repository.Content.GetAllContents(username, repository, repo.Path);
+            Thread.Sleep(TimeSpan.FromSeconds(5)); // Rate limiting.
+        }        
+        var repoContent = task.Result;
+        var wc = new WebClient();
+        foreach (var file in repoContent)
+        {
+            if (file.Type == "Dir")
+            {
+                Response.Write("Creating: " + output + file.Path + "<br>");
+                Response.Flush();  // Dubug
+                Directory.CreateDirectory(output + file.Path);
+                CloneRepo(file);
+            }
+            if (file.DownloadUrl == null) continue;
+            var bDownload = wc.DownloadData(file.DownloadUrl);
+            File.WriteAllBytes(output + file.Path, bDownload);
+            Response.Write("Writing: " + output + file.Path + "<br>");
+            Response.Flush(); // Dubug
         }
-    }
-
-    public string GetTemporaryDirectory()
-    {
-        string tempDirectory = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
-        Directory.CreateDirectory(tempDirectory);
-        return tempDirectory;
     }
 }
