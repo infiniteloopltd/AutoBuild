@@ -38,8 +38,7 @@ public partial class github : System.Web.UI.Page
         foreach (var file in repoContent)
         {
             if (file.Type == "Dir")
-            {
-                Response.Write("Creating: " + output + file.Path + "<br>");        
+            {                  
                 Directory.CreateDirectory(output + file.Path);
                 CloneRepo(file);
             }
@@ -49,11 +48,7 @@ public partial class github : System.Web.UI.Page
             {
                 File.WriteAllBytes(output + file.Path, bDownload);
             }
-            catch(Exception ex)
-            {
-                Response.Write(ex.ToString() + "<br>");
-            }            
-            Response.Write("Writing: " + output + file.Path + "<br>");     
+            catch{}                        
         }
     }
 }
