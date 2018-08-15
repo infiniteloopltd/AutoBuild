@@ -31,7 +31,7 @@ public partial class github : System.Web.UI.Page
         else
         {
             task = client.Repository.Content.GetAllContents(username, repository, repo.Path);
-            Thread.Sleep(TimeSpan.FromSeconds(5)); // Rate limiting.
+            Thread.Sleep(TimeSpan.FromMilliseconds(500)); // Rate limiting.
         }        
         var repoContent = task.Result;
         var wc = new WebClient();
