@@ -46,7 +46,14 @@ public partial class github : System.Web.UI.Page
             }
             if (file.DownloadUrl == null) continue;
             var bDownload = wc.DownloadData(file.DownloadUrl);
-            File.WriteAllBytes(output + file.Path, bDownload);
+            try
+            {
+                File.WriteAllBytes(output + file.Path, bDownload);
+            }
+            catch(Exception ex)
+            {
+                Response.Write(ex.ToString() + "<br>");
+            }            
             Response.Write("Writing: " + output + file.Path + "<br>");
             Response.Flush(); // Dubug
         }
